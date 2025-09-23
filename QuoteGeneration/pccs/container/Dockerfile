@@ -41,7 +41,7 @@ RUN . "$NVM_DIR/nvm.sh" && nvm install $NODE_VERSION && nvm use $NODE_VERSION
 ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 # Clone the specific branch or tag 
-RUN git clone --recurse-submodules https://github.com/intel/SGXDataCenterAttestationPrimitives.git -b ${DCAP_VERSION} --depth 1
+RUN git clone --recurse-submodules https://github.com/opensovereigncloud/SGXDataCenterAttestationPrimitives.git -b ${DCAP_VERSION} --depth 1
 
 # Provide expected OpenSSL headers path for the Intel Makefile
 RUN mkdir -p /SGXDataCenterAttestationPrimitives/prebuilt/openssl/inc/openssl \

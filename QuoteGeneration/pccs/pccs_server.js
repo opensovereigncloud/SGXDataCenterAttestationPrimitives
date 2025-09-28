@@ -36,7 +36,7 @@ import express from 'express';
 import logger from './utils/Logger.js';
 import node_schedule from 'node-schedule';
 import body_parser from 'body-parser';
-import { sgxRouter, tdxRouter } from './routes/index.js';
+import { sgxRouter, tdxRouter, healthRouter } from './routes/index.js';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as auth from './middleware/auth.js';
@@ -118,6 +118,8 @@ function configureMiddlewareAndRoutes() {
     app.use('/sgx/certification/v4', sgxRouter);
     app.use('/tdx/certification/v4', tdxRouter);
   }
+
+  app.use('/health', healthRouter);
 
   // error handling middleware
   app.use(error.errorHandling);

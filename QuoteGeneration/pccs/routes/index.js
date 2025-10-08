@@ -40,11 +40,13 @@ import {
   refreshController,
   crlController,
   appraisalPolicyController,
+  healthController,
 } from '../controllers/index.js';
 
 // express routes for our API
 const sgxRouter = Router();
 const tdxRouter = Router();
+const healthRouter = Router();
 
 //---------------- Routes for SGX APIs-------------------------------
 sgxRouter
@@ -85,6 +87,9 @@ tdxRouter.route('/tcb').get(tcbinfoController.getTdxTcbInfo);
 
 tdxRouter.route('/qe/identity').get(identityController.getTdQeIdentity);
 
+// Liveness probe endpoint
+healthRouter.get('/live', healthController.getLiveness);
+healthRouter.get('/ready', healthController.getReadiness);
+healthRouter.get('/startup', healthController.getStartup);
 
-
-export { sgxRouter, tdxRouter };
+export { sgxRouter, tdxRouter, healthRouter };

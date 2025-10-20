@@ -68,31 +68,20 @@ jobs:
         run: |
           docker push ${{ env.registry }}/${{ env.repo_name }}/pccs:${{ env.IMAGE_TAG }}
 
-      # --- Integration Tests ---
-      - name: Checkout integration test repo
-        uses: actions/checkout@v4
-        with:
-          repository: scontain/cc-intel-pccs
-          path: cc-intel-pccs
-
       - name: Create .env file for integration tests
         run: |
           cat <<EOF > cc-intel-pccs/.env
           CLUSTER_NAME=pr-test-cluster
           DCAP_KEY=${{ secrets.DCAP_KEY }}
           KUBECONFIG=./tests/tmp/kubeconfig
-          OCP_APIM_SUBSCRIPTION_KEY=${{ secrets.OCP_APIM_SUBSCRIPTION_KEY }}
           PCCS_URL=pccs.example.com
           PCCS_ADMIN_TOKEN="admin_password"
           PCCS_USER_TOKEN="user_password"
-          IMAGE_REGISTRY=ghcr.io
-          IMAGE_USERNAME=${{ github.actor }}
-          IMAGE_PASSWORD=${{ secrets.GITHUB_TOKEN }}
-          IMAGE_EMAIL=${{ secrets.IMAGE_EMAIL }}
+          IMAGE_TAG=${{ env.IMAGE_TAG }}
           EOF
 
       - name: Run integration tests
         run: |
-          cd cc-intel-pccs
+          cd cc-intel-pccs/QuoteGeneration/pccs/integration_tests
           source .env
           bash tests/run-all.sh

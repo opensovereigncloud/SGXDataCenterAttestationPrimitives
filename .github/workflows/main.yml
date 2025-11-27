@@ -1,0 +1,42 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment variables
+        run: |
+          echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          echo "registry=ghcr.io/${GITHUB_REPOSITORY_OWNER}" >> $GITHUB_ENV
+          echo "repo_name=$(echo ${GITHUB_REPOSITORY} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg DCAP_VERSION=${{ env.IMAGE_TAG } \
+            -t ${{ env.registry }}/${{ env.repo_name }}/pccs:${{ env.IMAGE_TAG }} \
+            -f QuoteGeneration/pccs/container/Dockerfile \
+            QuoteGeneration/pccs/container
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.registry }}/${{ env.repo_name }}/pccs:${{ env.IMAGE_TAG }}

@@ -113,88 +113,90 @@ async function processPckCerts(collateralJson, version) {
     }));
 
     for (const { tcbm, cert } of decodedCerts) {
+      logger.debug("escrevendo pck no bd");
       await pckcertDao.upsertPckCert(qeId, pceId, tcbm, cert);
     }    
 
     // We will update platforms both in cache and in the request list
     // make a full list based on the cache data and the input data
-    const cachedPlatformTcbs = await platformTcbsDao.getPlatformTcbsById(qeId, pceId);
-    const newPlatforms = platforms.filter(o => o.pce_id === rawPceId && o.qe_id === rawQeId);
-    const newRawTcbs = newPlatforms.filter(o => Boolean(o.cpu_svn) && Boolean(o.pce_svn));
+    // const cachedPlatformTcbs = await platformTcbsDao.getPlatformTcbsById(qeId, pceId);
+    // const newPlatforms = platforms.filter(o => o.pce_id === rawPceId && o.qe_id === rawQeId);
+    // const newRawTcbs = newPlatforms.filter(o => Boolean(o.cpu_svn) && Boolean(o.pce_svn));
 
-    // put all together
-    const platformsCleaned = [...new Set([...cachedPlatformTcbs, ...newRawTcbs])];
+    // // put all together
+    // const platformsCleaned = [...new Set([...cachedPlatformTcbs, ...newRawTcbs])];
 
     // parse arbitary cert to get fmspc value
-    const x509 = new X509();
-    if (!x509.parseCert(decodedCerts[0].cert)) {
-      logger.error('Invalid certificate format.');
-      throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
-    }
+    // const x509 = new X509();
+    // if (!x509.parseCert(decodedCerts[0].cert)) {
+    //   logger.error('aki.');
+    //   logger.error('Invalid certificate format.');
+    //   throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
+    // }
 
-    const { fmspc, ca } = x509;
-    if (!fmspc || !ca) {
-      logger.error('Invalid certificate format.');
-      throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
-    }
+    // const { fmspc, ca } = x509;
+    // if (!fmspc || !ca) {
+    //   logger.error('Invalid certificate format.');
+    //   throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
+    // }
 
-    // get tcbinfo for the fmspc
-    const tcbinfo = collaterals.tcbinfos.find((o) => o.fmspc === fmspc);
-    if (!tcbinfo) {
-      logger.error("Can't find TCB info.");
-      throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
-    }
+    // // get tcbinfo for the fmspc
+    // const tcbinfo = collaterals.tcbinfos.find((o) => o.fmspc === fmspc);
+    // if (!tcbinfo) {
+    //   logger.error("Can't find TCB info.");
+    //   throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
+    // }
 
-    let tcbinfoStr;
-    if (version < 4) {
-      tcbinfoStr = tcbinfo.tcbinfo_early ? JSON.stringify(tcbinfo.tcbinfo_early) :
-                   tcbinfo.tcbinfo ? JSON.stringify(tcbinfo.tcbinfo) :
-                   null;
-    } else {
-      tcbinfoStr = tcbinfo.sgx_tcbinfo_early ? JSON.stringify(tcbinfo.sgx_tcbinfo_early) :
-              (tcbinfo.sgx_tcbinfo ? JSON.stringify(tcbinfo.sgx_tcbinfo) :
-              null);
-    }
-    if (tcbinfoStr === null) {
-      logger.error("Can't find TCB info.");
-      throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
-    }
-    for (let platform of platformsCleaned) {
-      // get the best cert with PCKCertSelectionTool
-      const cert_index = pckLibWrapper.pck_cert_select(
-        platform.cpu_svn,
-        platform.pce_svn,
-        platform.pce_id,
-        tcbinfoStr,
-        decodedCerts.map(c => c.cert),
-        decodedCerts.length
-      );
-      if (cert_index === -1) {
-        logger.error('Failed to select the best certificate for ' + platform);
-        throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
-      }
+    // let tcbinfoStr;
+    // if (version < 4) {
+    //   tcbinfoStr = tcbinfo.tcbinfo_early ? JSON.stringify(tcbinfo.tcbinfo_early) :
+    //                tcbinfo.tcbinfo ? JSON.stringify(tcbinfo.tcbinfo) :
+    //                null;
+    // } else {
+    //   tcbinfoStr = tcbinfo.sgx_tcbinfo_early ? JSON.stringify(tcbinfo.sgx_tcbinfo_early) :
+    //           (tcbinfo.sgx_tcbinfo ? JSON.stringify(tcbinfo.sgx_tcbinfo) :
+    //           null);
+    // }
+    // if (tcbinfoStr === null) {
+    //   logger.error("Can't find TCB info.");
+    //   throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
+    // }
+    // for (let platform of platformsCleaned) {
+    //   // get the best cert with PCKCertSelectionTool
+    //   const cert_index = pckLibWrapper.pck_cert_select(
+    //     platform.cpu_svn,
+    //     platform.pce_svn,
+    //     platform.pce_id,
+    //     tcbinfoStr,
+    //     decodedCerts.map(c => c.cert),
+    //     decodedCerts.length
+    //   );
+    //   if (cert_index === -1) {
+    //     logger.error('Failed to select the best certificate for ' + platform);
+    //     throw new PccsError(PccsStatus.PCCS_STATUS_INVALID_REQ);
+    //   }
 
-      // update platform_tcbs table
-      await platformTcbsDao.upsertPlatformTcbs(
-        qeId,
-        pceId,
-        toUpper(platform.cpu_svn),
-        toUpper(platform.pce_svn),
-        decodedCerts[cert_index].tcbm
-      );
-    }
+    //   // update platform_tcbs table
+    //   await platformTcbsDao.upsertPlatformTcbs(
+    //     qeId,
+    //     pceId,
+    //     toUpper(platform.cpu_svn),
+    //     toUpper(platform.pce_svn),
+    //     decodedCerts[cert_index].tcbm
+    //   );
+    // }
 
-    // update platforms table for new platforms only
-    for (const platform of newPlatforms) {
-      await platformsDao.upsertPlatform(
-        qeId,
-        pceId,
-        toUpper(platform.platform_manifest),
-        toUpper(platform.enc_ppid),
-        toUpper(fmspc),
-        toUpper(ca)
-      );
-    }
+    // // update platforms table for new platforms only
+    // for (const platform of newPlatforms) {
+    //   await platformsDao.upsertPlatform(
+    //     qeId,
+    //     pceId,
+    //     toUpper(platform.platform_manifest),
+    //     toUpper(platform.enc_ppid),
+    //     toUpper(fmspc),
+    //     toUpper(ca)
+    //   );
+    // }
   }
 }
 
